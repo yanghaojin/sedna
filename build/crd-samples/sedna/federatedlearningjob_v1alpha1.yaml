@@ -3,26 +3,14 @@ kind: FederatedLearningJob
 metadata:
   name: surface-defect-detection
 spec:
-  transimitter:
-    #    ws: { } # option, by default
-    s3: # option, but at least one
-      aggDataPath: "s3://sedna/fl/aggregation_data"
-      credentialName: mysecret
-  # if this is configured, then the aggregationWorker will be start on demand.
-  # and transmitter should be configured to s3.
-  aggregationTrigger:
-    condition:
-      operator: ">="
-      threshold: 2
-      metric: num_of_select_clients
   aggregationWorker:
     model:
       name: "surface-defect-detection-model"
     template:
       spec:
-        nodeName: "cloud"
+        nodeName: "sedna-mini-control-plane"
         containers:
-          - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-aggregation:v0.1.0
+          - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-aggregation:v0.4.0
             name: agg-worker
             imagePullPolicy: IfNotPresent
             env: # user defined environments
@@ -36,9 +24,9 @@ spec:
         name: "edge1-surface-defect-detection-dataset"
       template:
         spec:
-          nodeName: "edge1"
+          nodeName: "edge0"
           containers:
-            - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.1.0
+            - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.4.0
               name: train-worker
               imagePullPolicy: IfNotPresent
               env: # user defined environments
@@ -47,7 +35,7 @@ spec:
                 - name: "learning_rate"
                   value: "0.001"
                 - name: "epochs"
-                  value: "1"
+                  value: "2"
               resources: # user defined resources
                 limits:
                   memory: 2Gi
@@ -55,9 +43,9 @@ spec:
         name: "edge2-surface-defect-detection-dataset"
       template:
         spec:
-          nodeName: "edge2"
+          nodeName: "edge1"
           containers:
-            - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.1.0
+            - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.4.0
               name: train-worker
               imagePullPolicy: IfNotPresent
               env: # user defined environments
@@ -66,7 +54,7 @@ spec:
                 - name: "learning_rate"
                   value: "0.001"
                 - name: "epochs"
-                  value: "1"
+                  value: "2"
               resources: # user defined resources
                 limits:
                   memory: 2Gi
