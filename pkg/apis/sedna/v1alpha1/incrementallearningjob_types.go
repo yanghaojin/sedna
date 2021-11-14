@@ -79,12 +79,6 @@ type Timer struct {
 	End   string `json:"end"`
 }
 
-type Condition struct {
-	Operator  string  `json:"operator"`
-	Threshold float64 `json:"threshold"`
-	Metric    string  `json:"metric"`
-}
-
 type ILDataset struct {
 	Name      string  `json:"name"`
 	TrainProb float64 `json:"trainProb"`

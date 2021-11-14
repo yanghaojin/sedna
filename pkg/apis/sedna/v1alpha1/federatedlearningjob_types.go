@@ -37,16 +37,21 @@ type FederatedLearningJob struct {
 
 // FLJobSpec is a description of a federatedlearning job
 type FLJobSpec struct {
-	AggregationWorker AggregationWorker `json:"aggregationWorker"`
-	TrainingWorkers   []TrainingWorker  `json:"trainingWorkers"`
-	PretrainedModel   PretrainedModel   `json:"pretrainedModel,omitempty"`
-	Transmitter       Transmitter       `json:"transmitter,omitempty"`
+	AggregationWorker  AggregationWorker  `json:"aggregationWorker"`
+	TrainingWorkers    []TrainingWorker   `json:"trainingWorkers"`
+	PretrainedModel    PretrainedModel    `json:"pretrainedModel,omitempty"`
+	Transmitter        Transmitter        `json:"transmitter,omitempty"`
+	AggregationTrigger AggregationTrigger `json:"aggregationTrigger,omitempty"`
 }
 
 // Transmitter describes the transmitter of data plane between training workers and aggregation worker
 type Transmitter struct {
 	S3 *S3Transmitter `json:"s3,omitempty"`
 	WS *WSTransmitter `json:"ws,omitempty"`
+}
+
+type AggregationTrigger struct {
+	Condition Condition `json:"condition"`
 }
 
 // S3Transmitter describes the s3 transmitter

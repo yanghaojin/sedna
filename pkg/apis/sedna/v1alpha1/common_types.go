@@ -21,6 +21,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+type Condition struct {
+	Operator  string  `json:"operator"`
+	Threshold float64 `json:"threshold"`
+	Metric    string  `json:"metric"`
+}
+
 // Metric describes the data that a resource model metric should have
 type Metric struct {
 	Key   string `json:"key"`
