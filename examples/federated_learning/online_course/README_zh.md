@@ -8,16 +8,29 @@
 
 ####  配置工作负载
 这里使用华为云：
+* 上传聚合容器镜像
 ![img.png](image/1.create_payload.png)
 
+* 配置启动参数
 
-#### 1.启动聚合节点
-* 上传聚合容器镜像
-* 手动启动聚合节点
-* TODO：配置参数有哪些
+* 配置访问服务
+![img.png](image/img.png)
+ 
+
 
 #### 2.制作包含Sedna的基础镜像
-* Kaggle notebook预装好Sedna运行环境
+* 安装基本工具
+```
+!apt install iputils-ping telnet -y
+```
+
+* 安装之后存档到kaggle notebook version
+> version6: 安装了telnet、ping工具
+
+* 预装Sedna运行环境
+
+
+
 * 配置需要的环境变量 
   * 云上agg worker的ip和配置
 
