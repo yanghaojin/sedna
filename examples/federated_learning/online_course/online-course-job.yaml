@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: online-course
+spec:
+  selector:
+    matchLabels:
+      app: online-course
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: online-course
+    spec:
+      containers:
+        - name: online-course
+          image: kubeedge/sedna-example-federated-learning-online-course-aggregation:v0.4.0
+          ports:
+            - containerPort: 7363
+          env:
+            - name: PAAS_APP_NAME
+              value: fl-online-course-aggregator
+            - name: PAAS_NAMESPACE
+              value: default
+            - name: PAAS_PROJECT_ID
+              value: 3925b3f37d574630b527611edca45c91

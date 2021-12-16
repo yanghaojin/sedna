@@ -21,6 +21,6 @@ RUN pip install -r /home/plato/requirements.txt
 #RUN  pip install plato-learn==0.2.7
 
 WORKDIR /home/work
-COPY examples/federated_learning/online_courses  /home/work/
+COPY examples/federated_learning/online_course  /home/work/
 
 CMD ["/bin/sh", "-c", "ulimit -n 50000; python aggregate.py"]

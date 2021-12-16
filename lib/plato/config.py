@@ -129,7 +129,7 @@ class Config:
             # Pretrained models
             Config.params['model_dir'] = "./models/pretrained/"
             Config.params['pretrained_model_dir'] = "./models/pretrained/"
-
+            logging.info(cls._instance.__dict__)
         return cls._instance
 
     @staticmethod

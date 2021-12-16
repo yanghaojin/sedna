@@ -247,9 +247,9 @@ class FederatedLearningV2:
                                  secret_key=BaseConfig.secret_access_key,
                                  transmitter_url=BaseConfig.agg_data_path)
 
-    async def train(self):
+    def train(self):
         if int(sys.version[2]) <= 6:
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self.client.start_client())
         else:
-            await self.client.start_client()
+            asyncio.run(self.client.start_client())

@@ -111,7 +111,7 @@ class Client:
             self.s3_client = s3.S3()
         except:
             self.s3_client = None
-        
+
         uri = ""
         if hasattr(Config().server, 'use_https'):
             uri = 'https://{}'.format(Config().server.address)

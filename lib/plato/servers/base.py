@@ -111,9 +111,9 @@ class Server:
                      Config().server.address, port)
 
         ping_interval = Config().server.ping_interval if hasattr(
-            Config().server, 'ping_interval') else 3600
+            Config().server, 'ping_interval') else 360000
         ping_timeout = Config().server.ping_timeout if hasattr(
-            Config().server, 'ping_timeout') else 360
+            Config().server, 'ping_timeout') else 36000
         self.sio = socketio.AsyncServer(ping_interval=ping_interval,
                                         max_http_buffer_size=2**31,
                                         ping_timeout=ping_timeout)
