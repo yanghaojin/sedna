@@ -65,7 +65,8 @@ dockerfiles_federated_learning=(
 #federated-learning-mistnet-yolo-client.Dockerfile
 #federated-learning-surface-defect-detection-aggregation.Dockerfile
 #federated-learning-surface-defect-detection-train.Dockerfile
-federated-learning-online-course-aggregation.Dockerfile
+#federated-learning-online-course-aggregation-tensorflow.Dockerfile
+federated-learning-online-course-aggregation-pytorch.Dockerfile
 )
 
 dockerfiles_joint_inference=(
