@@ -33,14 +33,25 @@ def image_process(line):
 
     return [x, y]
 
+def readFromTxt(path):
+    data_x = []
+    data_y = []
+    with open(path) as f:
+        lines = f.readlines()
+        for line in lines:
+            x, y = image_process(line)
+            data_x.append(x)
+            data_y.append(y)
+    return data_x, data_y
+
 def main():
     train_dataset_url = BaseConfig.train_dataset_url
     # we have same data in the trainset and testset
     test_dataset_url = BaseConfig.train_dataset_url
 
-    train_data = TxtDataParse(data_type="train", func=image_process)
-    train_data.parse(train_dataset_url)
-    
+    # train_data = TxtDataParse(data_type="train", func=image_process)
+    # train_data.parse(train_dataset_url)
+    train_data = readFromTxt(train_dataset_url)
     data = myDataset(trainset=train_data, testset=train_data)
     
     estimator = Estimator()

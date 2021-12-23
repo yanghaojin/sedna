@@ -48,8 +48,8 @@ class SddDataset(Dataset):
 class myDataset:
     def __init__(self, trainset=None, testset=None) -> None:
         self.customized = True
-        self.trainset = SddDataset(trainset.x, trainset.y)
-        self.testset = SddDataset(testset.x, testset.y)
+        self.trainset = SddDataset(trainset[0], trainset[1])
+        self.testset = SddDataset(testset[0], testset[1])
 
 class Estimator:
     def __init__(self) -> None:
