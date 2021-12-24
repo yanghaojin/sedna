@@ -15,6 +15,5 @@ uvicorn~=0.14.0  # BSD
 python-socketio
 aiohttp
 boto3
-pyyaml
 datasets
 nest_asyncio

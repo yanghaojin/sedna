@@ -1,7 +1,7 @@
 """
 A federated learning client at the edge server in a cross-silo training workload.
 """
-
+import logging
 import time
 from dataclasses import dataclass
 
@@ -46,6 +46,7 @@ class Client(base.Client):
 
     def process_server_response(self, server_response):
         """Additional client-specific processing on the server response."""
+        logging.info("on_payload_to_arrive")
         if 'current_global_round' in server_response:
             self.server.current_global_round = server_response[
                 'current_global_round']

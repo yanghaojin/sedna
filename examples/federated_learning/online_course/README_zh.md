@@ -32,7 +32,7 @@ git checkout feature-online-course
 
 1. 构建镜像
 ```shell
-bash examples/build_image.sh
+bash examples/build_image.sh federated_learning
 ```
 2. 启动aggregation worker
 ```shell

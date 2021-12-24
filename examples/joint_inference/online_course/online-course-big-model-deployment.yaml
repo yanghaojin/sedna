@@ -1,22 +1,46 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: online-course-aggregation
+  name: online-course-big-model
   namespace: online-course
 spec:
   selector:
     matchLabels:
-      app: online-course-aggregation
+      app: online-course-big-model
   replicas: 1 # tells deployment to run 2 pods matching the template
   template:
     metadata:
       labels:
-        app: online-course-aggregation
+        app: online-course-big-model
     spec:
       containers:
         - name: online-course
-          image: kubeedge/sedna-example-federated-learning-online-course-big-model:v0.4.0
+          image: kubeedge/sedna-example-joint-inference-online-course-big-model:v0.4.0
           ports:
-            - containerPort: 7363
+            - containerPort: 5000
           env:
+            - name: input_shape
+              value: 544,544
+            - name: DATA_PATH_PREFIX
+              value: /home/data
+            - name: BIG_MODEL_BIND_PORT
+              value: "5000"
+            - name: MODEL_URL
+              value: /data/big-model/yolov3_darknet.pb
+            - name: NAMESPACE
+              value: default
+            - name: SERVICE_NAME
+              value: helmet-detection-inference-example
+            - name: WORKER_NAME
+              value: cloudworker-rjj2b
+          volumeMounts:
+            - mountPath: /data/big-model/
+              name: data-big-modelz
+      volumes:
+        - hostPath:
+            path: /data/big-model/
+            type: Directory
+          name: data-big-modelz
+
+
 

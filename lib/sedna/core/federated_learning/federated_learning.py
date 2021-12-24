@@ -14,6 +14,8 @@
 
 
 import asyncio
+import random
+import string
 import sys
 import time
 
@@ -246,6 +248,11 @@ class FederatedLearningV2:
                                  access_key=BaseConfig.access_key_id,
                                  secret_key=BaseConfig.secret_access_key,
                                  transmitter_url=BaseConfig.agg_data_path)
+
+    def register(self):
+        client_id = ''.join(random.choice(string.digits) for i in range(10))
+        # aggregation service parameters
+        sys.argv.extend(['-i', client_id])  # client id
 
     def train(self):
         if int(sys.version[2]) <= 6:

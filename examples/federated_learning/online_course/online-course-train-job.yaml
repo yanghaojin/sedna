@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: online-course-train
+  namespace: online-course
+spec:
+#  selector:
+#    matchLabels:
+#      app: online-course-train
+#  replicas: 4 # tells deployment to run 2 pods matching the template
+#  completions: 100
+  parallelism: 40
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: online-course
+          image: kubeedge/sedna-example-federated-learning-online-course-train-pytorch:v0.4.0
+          env:
+            - name: AGG_IP
+              value: 10.247.16.251
+#            - name: CLIENT_ID
+#              value: "1"  # if set 0 or not set, client_id will be controlled by sedna
+          volumeMounts:
+            - mountPath: /kaggle/input/magnetic-tile-defect-datasets/
+              name: magnetic-tile-defect-datasets
+      volumes:
+        - hostPath:
+            path: /data/fl/magnetic-tile-defect-datasets/
+            type: Directory
+          name: magnetic-tile-defect-datasets
+
+

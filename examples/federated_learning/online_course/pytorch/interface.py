@@ -22,7 +22,8 @@ from sedna.core.federated_learning import FederatedLearningV2
 
 # os.environ['BACKEND_TYPE'] = 'KERAS'
 
-simple_chooser = SimpleClientChoose(per_round=2)
+simple_chooser = SimpleClientChoose(
+    per_round=int(Context.get_parameters('NUM_OF_SELECTED_CLIENTS', 2)))
 
 # It has been determined that mistnet is required here.
 fedavg = FedAvgV2()

@@ -6,6 +6,8 @@ import asyncio
 import logging
 import os
 import pickle
+import random
+import string
 import sys
 import uuid
 from abc import abstractmethod
@@ -26,12 +28,13 @@ class Report:
 
 class ClientEvents(socketio.AsyncClientNamespace):
     """ A custom namespace for socketio.AsyncServer. """
+
     def __init__(self, namespace, plato_client):
         super().__init__(namespace)
         self.plato_client = plato_client
         self.client_id = plato_client.client_id
 
-    #pylint: disable=unused-argument
+    # pylint: disable=unused-argument
     async def on_connect(self):
         """ Upon a new connection to the server. """
         logging.info("[Client #%d] Connected to the server.", self.client_id)
@@ -65,10 +68,22 @@ class ClientEvents(socketio.AsyncClientNamespace):
         await self.plato_client.payload_done(data['id'], data['obkey'])
 
 
+def _get_client_id():
+    client_id = os.getenv("CLIENT_ID")
+    my_pod_name = os.getenv("MY_POD_NAME")
+    if client_id is not None:
+        return client_id
+    elif my_pod_name is not None:
+        return my_pod_name
+    else:
+        return int(''.join(random.choice(string.digits) for i in range(10)))
+
+
 class Client:
     """ A basic federated learning client. """
+
     def __init__(self) -> None:
-        self.client_id = Config().args.id
+        self.client_id = _get_client_id()
         self.sio = None
         self.chunks = []
         self.server_payload = None
@@ -157,6 +172,7 @@ class Client:
 
     async def payload_arrived(self, client_id) -> None:
         """ Upon receiving a portion of the new payload from the server. """
+        logging.info("on_payload")
         assert client_id == self.client_id
 
         payload = b''.join(self.chunks)
@@ -173,6 +189,7 @@ class Client:
 
     async def payload_done(self, client_id, object_key) -> None:
         """ Upon receiving all the new payload from the server. """
+        logging.info("on_payload_done")
         payload_size = 0
 
         if object_key is None:
@@ -192,7 +209,7 @@ class Client:
 
         logging.info(
             "[Client #%d] Received %s MB of payload data from the server.",
-            client_id, round(payload_size / 1024**2, 2))
+            client_id, round(payload_size / 1024 ** 2, 2))
 
         self.load_payload(self.server_payload)
         self.server_payload = None
@@ -246,7 +263,7 @@ class Client:
         await self.sio.emit('client_payload_done', {'id': self.client_id, 'obkey': payload_key})
 
         logging.info("[Client #%d] Sent %s MB of payload data to the server.",
-                     self.client_id, round(data_size / 1024**2, 2))
+                     self.client_id, round(data_size / 1024 ** 2, 2))
 
     def process_server_response(self, server_response) -> None:
         """Additional client-specific processing on the server response."""

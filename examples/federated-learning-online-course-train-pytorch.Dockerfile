@@ -22,4 +22,4 @@ COPY ./lib /home/lib
 WORKDIR /home/work
 COPY examples/federated_learning/online_course/pytorch  /home/work/
 
-CMD ["/bin/sh", "-c", "ulimit -n 50000; python aggregate.py"]
+ENTRYPOINT ["python", "train_on_kaggle.py"]

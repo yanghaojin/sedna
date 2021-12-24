@@ -5,10 +5,10 @@ metadata:
   namespace: online-course
 spec:
   ports:
-    - nodePort: 30363
-      port: 7363
+    - nodePort: 30500
+      port: 5000
       protocol: TCP
-      targetPort: 7363
+      targetPort: 5000
   selector:
     app: online-course-big-model
   sessionAffinity: None

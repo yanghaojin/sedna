@@ -67,11 +67,13 @@ dockerfiles_federated_learning=(
 #federated-learning-surface-defect-detection-train.Dockerfile
 #federated-learning-online-course-aggregation-tensorflow.Dockerfile
 federated-learning-online-course-aggregation-pytorch.Dockerfile
+federated-learning-online-course-train-pytorch.Dockerfile
 )
 
 dockerfiles_joint_inference=(
 #joint-inference-helmet-detection-big.Dockerfile
 #joint-inference-helmet-detection-little.Dockerfile
+joint-inference-online-course-big-model.Dockerfile
 )
 
 dockerfiles_lifelong_learning=(

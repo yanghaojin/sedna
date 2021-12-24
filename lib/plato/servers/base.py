@@ -132,6 +132,7 @@ class Server:
 
     async def register_client(self, sid, client_id):
         """Adding a newly arrived client to the list of clients."""
+        logging.debug('on_client_alive')
         if not client_id in self.clients:
             # The last contact time is stored for each client
             self.clients[client_id] = {
@@ -288,6 +289,7 @@ class Server:
 
     async def client_report_arrived(self, sid, report):
         """ Upon receiving a report from a client. """
+        logging.debug('on_client_report')
         self.reports[sid] = pickle.loads(report)
         self.client_payload[sid] = None
         self.client_chunks[sid] = []
@@ -298,6 +300,7 @@ class Server:
 
     async def client_payload_arrived(self, sid, client_id):
         """ Upon receiving a portion of the payload from a client. """
+        logging.debug('on_client_payload')
         assert len(
             self.client_chunks[sid]) > 0 and client_id in self.selected_clients
 
@@ -315,6 +318,7 @@ class Server:
 
     async def client_payload_done(self, sid, client_id, object_key):
         """ Upon receiving all the payload from a client, eithe via S3 or socket.io. """
+        logging.debug('on_client_payload_done')
         if object_key is None:
             assert self.client_payload[sid] is not None
 
@@ -351,7 +355,7 @@ class Server:
                 del self.clients[client_id]
 
                 logging.info(
-                    "[Server #%d] Client #%d disconnected and removed from this server.",
+                    "[Server #%d] Client #%s disconnected and removed from this server.",
                     os.getpid(), client_id)
 
                 if client_id in self.selected_clients:

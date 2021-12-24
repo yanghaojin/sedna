@@ -7,9 +7,12 @@ import logging
 import os
 import random
 import sqlite3
+import sys
 from collections import OrderedDict, namedtuple
 
 import yaml
+
+sys.argv.extend(['-i', os.getenv('CLIENT_ID', '0')])  # client id
 
 
 class Config:
@@ -52,8 +55,6 @@ class Config:
                                 default=None,
                                 help='for kaggle notebook.')
 
-
-            
             args = parser.parse_args()
             Config.args = args
 
@@ -216,7 +217,7 @@ class Config:
         config['data']['datasource'] = 'MNIST'
         config['data']['data_path'] = './data'
         config['data']['partition_size'] = 20000
-        config['data']['sampler'] = 'iid'
+        config['data']['sampler'] = 'all_inclusive'
         config['data']['random_seed'] = 1
         config['trainer'] = {}
         config['trainer']['type'] = 'basic'
@@ -234,7 +235,7 @@ class Config:
         config['algorithm']['type'] = 'fedavg'
 
         return config
-    
+
     @staticmethod
     def store() -> None:
         data = {}

@@ -19,9 +19,11 @@ spec:
           ports:
             - containerPort: 7363
           env:
-            - name: PAAS_APP_NAME
-              value: fl-online-course-aggregator
-            - name: PAAS_NAMESPACE
-              value: default
-            - name: PAAS_PROJECT_ID
-              value: 3925b3f37d574630b527611edca45c91
+            - name: NUM_OF_SELECTED_CLIENTS
+              value: '20'
+          resources:
+              limits:
+                memory: "8Gi"
+              requests:
+                memory: "8Gi"
+
