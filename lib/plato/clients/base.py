@@ -84,6 +84,7 @@ class Client:
 
     def __init__(self) -> None:
         self.client_id = _get_client_id()
+        # self.client_id = Config().args.id
         self.sio = None
         self.chunks = []
         self.server_payload = None

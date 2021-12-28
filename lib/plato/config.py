@@ -12,9 +12,6 @@ from collections import OrderedDict, namedtuple
 
 import yaml
 
-sys.argv.extend(['-i', os.getenv('CLIENT_ID', '0')])  # client id
-
-
 class Config:
     """
     Retrieving configuration parameters by parsing a configuration file
@@ -29,6 +26,7 @@ class Config:
             parser.add_argument('-i',
                                 '--id',
                                 type=str,
+                                default='0',
                                 help='Unique client ID.')
             parser.add_argument('-p',
                                 '--port',

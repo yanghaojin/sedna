@@ -97,7 +97,8 @@ class Client(base.Client):
             training_time = self.trainer.train(self.trainset, self.sampler)
         except ValueError:
             await self.sio.disconnect()
-
+        
+        logging.info(self.sampler.trainset_size())
         # Extract model weights and biases
         weights = self.algorithm.extract_weights()
 
