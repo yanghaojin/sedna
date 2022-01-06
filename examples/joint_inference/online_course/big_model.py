@@ -18,7 +18,7 @@ from interface import Estimator
 
 
 def run():
-    inference_instance = BigModelService(estimator=Estimator)
+    inference_instance = BigModelService(estimator=Estimator(node_type="cloud"))
     inference_instance.start()
 
 

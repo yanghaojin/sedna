@@ -19,18 +19,16 @@ spec:
           ports:
             - containerPort: 5000
           env:
-            - name: input_shape
-              value: 544,544
             - name: DATA_PATH_PREFIX
               value: /home/data
             - name: BIG_MODEL_BIND_PORT
               value: "5000"
             - name: MODEL_URL
-              value: /data/big-model/yolov3_darknet.pb
+              value: /data/big-model/teacher_resnet110_0.72.pt
             - name: NAMESPACE
               value: default
             - name: SERVICE_NAME
-              value: helmet-detection-inference-example
+              value: edgeAI-course-collaborative-inference
             - name: WORKER_NAME
               value: cloudworker-rjj2b
           volumeMounts:
