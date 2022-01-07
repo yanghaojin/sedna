@@ -73,11 +73,11 @@ class Estimator:
             self.model = CIFAR100Net("resnet20")
 
     def load(self, model_url=""):
-        LOG.info(f"Load pt checkpoint {model_url}")
         checkpoint = torch.load(model_url, map_location=get_device())
+        LOG.info(f"Load pytorch checkpoint {model_url} finsihed!")
 
-        LOG.info("Loading pt state dict ...")
         self.model.load_state_dict(checkpoint['model_state_dict'])
+        LOG.info("Load pytorch state dict finished")
 
         self.model = self.model.to(get_device())
         self.model.eval()
@@ -86,4 +86,5 @@ class Estimator:
         image = to_device(data, self.device)
         predictions = self.model(image)
         props = F.softmax(predictions, dim=1)
-        return props.detach().cpu().numpy().flatten()
+        props_arr = props.detach().cpu().numpy().flatten().tolist()
+        return props_arr

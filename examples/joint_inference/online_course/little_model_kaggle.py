@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import time
-import copy
 import logging
 import pickle
 import numpy as np
@@ -105,7 +104,7 @@ def main():
 
         if is_hard_example: num_remote_samples += 1
 
-        torch_result = torch.from_numpy(final_result.reshape(1, -1))
+        torch_result = torch.from_numpy(np.asarray(final_result).reshape(1, -1))
         num_correct_predictions += float(accuracy(torch_result, label, reduce_mean=False).item())
 
     print("collaborative acc: {:.2f}, processed sample number (teacher/student): {}/{},  avg_inference_time: {:.3f} ms, total time: {:.3f} seconds.".format(
