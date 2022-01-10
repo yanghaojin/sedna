@@ -94,6 +94,7 @@ def main():
     duration = .0
     num_correct_predictions = 0
     for image, label in test_data_loader:
+        image = image.detach().cpu().numpy().tolist()
         start = time.time()
         is_hard_example, final_result, edge_result, cloud_result = (
             inference_instance.inference(image)
@@ -104,7 +105,7 @@ def main():
 
         if is_hard_example: num_remote_samples += 1
 
-        torch_result = torch.from_numpy(np.asarray(final_result).reshape(1, -1))
+        torch_result = torch.from_numpy(np.asarray(final_result, dtype=np.float32).reshape(1, -1))
         num_correct_predictions += float(accuracy(torch_result, label, reduce_mean=False).item())
 
     print("collaborative acc: {:.2f}, processed sample number (teacher/student): {}/{},  avg_inference_time: {:.3f} ms, total time: {:.3f} seconds.".format(

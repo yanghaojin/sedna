@@ -14,6 +14,7 @@
 
 import os
 import logging
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -62,9 +63,6 @@ def accuracy(predictions: torch.Tensor, labels: torch.Tensor, reduce_mean: bool 
 class Estimator:
 
     def __init__(self, node_type: str = "", **kwargs):
-        """
-        initialize logging configuration
-        """
         self.model = None
         self.device = get_device()
         if node_type == "cloud":
@@ -77,12 +75,13 @@ class Estimator:
         LOG.info(f"Load pytorch checkpoint {model_url} finsihed!")
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
-        LOG.info("Load pytorch state dict finished")
+        LOG.info("Load pytorch state dict finished!")
 
         self.model = self.model.to(get_device())
         self.model.eval()
 
     def predict(self, data, **kwargs):
+        data = torch.from_numpy(np.asarray(data, dtype=np.float32))
         image = to_device(data, self.device)
         predictions = self.model(image)
         props = F.softmax(predictions, dim=1)
