@@ -24,7 +24,7 @@ spec:
             - name: BIG_MODEL_BIND_PORT
               value: "5000"
             - name: MODEL_URL
-              value: /data/big-model/teacher_resnet110_0.72.pt
+              value: /data/big-model/teacher_resnet110.pt;/data/big-model/resnet110_p2.pt
             - name: NAMESPACE
               value: default
             - name: SERVICE_NAME

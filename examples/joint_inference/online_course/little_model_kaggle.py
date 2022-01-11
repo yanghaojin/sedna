@@ -76,6 +76,7 @@ def main():
 
     inference_instance = JointInference(
         estimator=Estimator,
+        # estimator=Estimator(is_partitioned=True),
         hard_example_mining={
             "method": "CrossEntropy",
             "param": {
@@ -94,10 +95,10 @@ def main():
     duration = .0
     num_correct_predictions = 0
     for image, label in test_data_loader:
-        image = image.detach().cpu().numpy().tolist()
         start = time.time()
         is_hard_example, final_result, edge_result, cloud_result = (
             inference_instance.inference(image)
+            # inference_instance.inference(image, is_partitioned=True) # for partitioned inference
         )
         if get_device() == torch.device("cuda"):
             torch.cuda.current_stream().synchronize()
