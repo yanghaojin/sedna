@@ -87,7 +87,6 @@ class Estimator:
 
     def load(self, model_url=""):
         url_list = model_url.split(";", 1)
-
         checkpoint = torch.load(url_list[0], map_location=get_device())
         LOG.info(f"Load pytorch checkpoint {url_list[0]} finsihed!")
         self.model.load_state_dict(checkpoint['model_state_dict'])
