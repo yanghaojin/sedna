@@ -23,7 +23,7 @@ import torch.nn.functional as F
 import cifar100_resnets as models
 
 LOG = logging.getLogger(__name__)
-os.environ['BACKEND_TYPE'] = 'PYTORCH'
+os.environ['BACKEND_TYPE'] = 'TORCH'
 
 
 class CIFAR100Net(nn.Module):
