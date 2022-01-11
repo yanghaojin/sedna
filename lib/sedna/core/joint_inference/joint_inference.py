@@ -15,12 +15,12 @@
 import os
 from copy import deepcopy
 
-from sedna.common.utils import get_host_ip
 from sedna.common.class_factory import ClassFactory, ClassType
-from sedna.service.server import InferenceServer
-from sedna.service.client import ModelClient, LCReporter
 from sedna.common.constant import K8sResourceKind
+from sedna.common.utils import get_host_ip
 from sedna.core.base import JobBase
+from sedna.service.client import ModelClient, LCReporter
+from sedna.service.server import InferenceServer
 
 __all__ = ("JointInference", "BigModelService")
 
@@ -150,20 +150,21 @@ class JointInference(JobBase):
             "BIG_MODEL_IP", self.local_ip)
         self.port = int(self.get_parameters("BIG_MODEL_PORT", "5000"))
 
-        report_msg = {
-            "name": self.worker_name,
-            "namespace": self.config.namespace,
-            "ownerName": self.job_name,
-            "ownerKind": self.job_kind,
-            "kind": "inference",
-            "results": []
-        }
-        period_interval = int(self.get_parameters("LC_PERIOD", "30"))
-        self.lc_reporter = LCReporter(lc_server=self.config.lc_server,
-                                      message=report_msg,
-                                      period_interval=period_interval)
-        self.lc_reporter.setDaemon(True)
-        self.lc_reporter.start()
+        if self.config.lc_server != '':
+            report_msg = {
+                "name": self.worker_name,
+                "namespace": self.config.namespace,
+                "ownerName": self.job_name,
+                "ownerKind": self.job_kind,
+                "kind": "inference",
+                "results": []
+            }
+            period_interval = int(self.get_parameters("LC_PERIOD", "30"))
+            self.lc_reporter = LCReporter(lc_server=self.config.lc_server,
+                                          message=report_msg,
+                                          period_interval=period_interval)
+            self.lc_reporter.setDaemon(True)
+            self.lc_reporter.start()
 
         if callable(self.estimator):
             self.estimator = self.estimator()
@@ -246,7 +247,8 @@ class JointInference(JobBase):
         if callback_func:
             res = callback_func(res)
 
-        self.lc_reporter.update_for_edge_inference()
+        if self.config.lc_server != '':
+            self.lc_reporter.update_for_edge_inference()
 
         is_hard_example = False
         cloud_result = None
@@ -262,5 +264,6 @@ class JointInference(JobBase):
                     self.log.error(f"get cloud result error: {err}")
                 else:
                     res = cloud_result
-                self.lc_reporter.update_for_collaboration_inference()
+                if self.config.lc_server != '':
+                    self.lc_reporter.update_for_edge_inference()
         return [is_hard_example, res, edge_result, cloud_result]
