@@ -119,12 +119,12 @@ class Estimator:
                 predictions = self.model2(data)
         else:
             predictions = self.model(data)
-            features = predictions
             if is_partitioned:
-                predictions = self.model2(predictions)
+                trans_features = predictions[1]
+                predictions = self.model2(predictions[0])
 
         props = F.softmax(predictions, dim=1)
         props_arr = props.detach().cpu().numpy().flatten().tolist()
         if is_partitioned:
-            props_arr = (props_arr, features)
+            props_arr = (props_arr, trans_features)
         return props_arr

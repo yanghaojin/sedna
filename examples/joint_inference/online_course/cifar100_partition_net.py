@@ -75,14 +75,19 @@ class BasicBlock(nn.Module):
         return out
 
 
+
 class ResNet110_P1(nn.Module):
     def __init__(self, block, num_blocks):
         super(ResNet110_P1, self).__init__()
         self.in_planes = 16
-
         self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
-        self.layer1 = self._make_layer(block, 16, num_blocks, stride=1)
+        self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
+        self.upsample = nn.Upsample(scale_factor=4, mode='nearest')
+        self.downsample = nn.MaxPool3d((5,1,1),stride=(5,1,1))
+        # self.downsample = nn.Conv2d(80, 16, kernel_size=1, stride=1, bias=False)
         self.apply(_weights_init)
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -96,28 +101,25 @@ class ResNet110_P1(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
+        shortcut = out
         out = self.layer1(out)
-        return out
+        out = self.layer2(out)
+        out = self.layer3(out)
+        cat = torch.cat((self.upsample(out), shortcut), 1)
+        cat = self.downsample(cat)
+        return (out, cat)
 
 
 class ResNet110_P1_Head(nn.Module):
-    def __init__(self, block, num_classes=100):
+    def __init__(self, num_classes=100):
         super(ResNet110_P1_Head, self).__init__()
-        self.linear_sub1 = nn.Linear(512, 512)
-        self.linear_sub2 = nn.Linear(512, 1024)
-        self.linear_sub3 = nn.Linear(1024, num_classes)
-        self.ln1 = nn.LayerNorm(512)
-        self.ln2 = nn.LayerNorm(1024)
-
+        self.linear = nn.Linear(64, num_classes)
         self.apply(_weights_init)
 
     def forward(self, x):
-        out = x.view(x.size(0), 512, -1)
-        out = F.avg_pool1d(out, x.size()[3])
+        out = F.avg_pool2d(x, x.size()[3])
         out = out.view(out.size(0), -1)
-        out = F.relu(self.ln1(self.linear_sub1(out)))
-        out = F.relu(self.ln2(self.linear_sub2(out)))
-        out = self.linear_sub3(out)
+        out = self.linear(out)
         return out
 
 
@@ -153,11 +155,11 @@ class ResNet110_P2(nn.Module):
 
 
 def resnet110_p1():
-    return ResNet110_P1(BasicBlock, 9)
+    return ResNet110_P1(BasicBlock, [3, 3, 3])
 
 
 def resnet110_p1_head(num_classes: int = 100):
-    return ResNet110_P1_Head(BasicBlock, num_classes=num_classes)
+    return ResNet110_P1_Head(num_classes=num_classes)
 
 
 def resnet110_p2(num_classes: int = 100):
