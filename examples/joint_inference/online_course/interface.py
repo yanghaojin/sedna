@@ -24,7 +24,7 @@ import cifar100_resnets as models
 from cifar100_partition_net import resnet110_p1, resnet110_p2, resnet110_p1_head
 
 LOG = logging.getLogger(__name__)
-os.environ['BACKEND_TYPE'] = 'PYTORCH'
+os.environ['BACKEND_TYPE'] = 'TORCH'
 
 
 class CIFAR100Net(nn.Module):
@@ -108,7 +108,6 @@ class Estimator:
         data = torch.from_numpy(np.asarray(data, dtype=np.float32))
         data = to_device(data, self.device)
 
-        features = None
         is_partitioned = False
         if "is_partitioned" in kwargs:
             is_partitioned = kwargs["is_partitioned"]
