@@ -108,7 +108,6 @@ class Estimator:
         data = torch.from_numpy(np.asarray(data, dtype=np.float32))
         data = to_device(data, self.device)
 
-        features = None
         is_partitioned = False
         if "is_partitioned" in kwargs:
             is_partitioned = kwargs["is_partitioned"]
