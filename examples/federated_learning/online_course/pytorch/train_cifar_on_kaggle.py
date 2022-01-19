@@ -14,9 +14,6 @@
 
 ## 1. 配置训练节点ID、聚合服务ip&port、数据集路径、训练超参数
 import os
-import random
-import string
-import sys
 
 # TODO: set in environment variables (if working offline)
 # TODO: set manually on Kaggle
@@ -53,40 +50,22 @@ os.environ['DATASET_NAME'] = "edge1-surface-defect-detection-dataset"
 
 ## 3. 编写训练模型，导入训练数据，启动本地训练。
 
-import os
-from PIL import Image
-from torch import nn
-from torch.utils.data import Dataset
-from torchvision import transforms
-
 from sedna.algorithms.aggregation import FedAvgV2
 from sedna.algorithms.client_choose import SimpleClientChoose
-from sedna.common.config import BaseConfig
 from sedna.common.config import Context
 from sedna.core.federated_learning import FederatedLearningV2
 
-import math
 import pickle
-import statistics
 
 import numpy as np
-import matplotlib.pyplot as plt
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.transforms as tt
-import imgaug
 
-from collections import defaultdict
-from typing import Type, List, Union
+from typing import Type, Union
 
 from imgaug import augmenters as iaa
 from pathlib import Path
 from PIL import Image
-from tqdm.notebook import tqdm, trange
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler, OneCycleLR
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
 import cifar_resnet as models
 
@@ -176,6 +155,7 @@ fedavg = FedAvgV2()
 
 # The function `get_transmitter_from_config()` returns an object instance.
 transmitter = FederatedLearningV2.get_transmitter_from_config()
+
 
 class CIFAR100Partition:
     def __init__(self, trainset, testset) -> None:
