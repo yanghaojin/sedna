@@ -21,6 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import cifar100_resnets as models
+from cifar100_partition_net import resnet110_p1, resnet110_p2, resnet110_p1_head
 
 LOG = logging.getLogger(__name__)
 os.environ['BACKEND_TYPE'] = 'TORCH'
@@ -62,26 +63,67 @@ def accuracy(predictions: torch.Tensor, labels: torch.Tensor, reduce_mean: bool 
 
 class Estimator:
 
-    def __init__(self, node_type: str = "", **kwargs):
+    def __init__(self, **kwargs):
         self.model = None
+        self.model2 = None
+        self.is_partitioned = False
+        self.is_cloud_node = False
         self.device = get_device()
-        if node_type == "cloud":
+
+        if "is_partitioned" in kwargs:
+            self.is_partitioned = kwargs["is_partitioned"]
+        if "is_cloud_node" in kwargs:
+            self.is_cloud_node = kwargs["is_cloud_node"]
+
+        if self.is_cloud_node:
             self.model = CIFAR100Net("resnet110")
+            self.model2 = resnet110_p2()
         else:
-            self.model = CIFAR100Net("resnet20")
+            if self.is_partitioned:
+                self.model = resnet110_p1()
+                self.model2 = resnet110_p1_head()
+            else:
+                self.model = CIFAR100Net("resnet20")
 
     def load(self, model_url=""):
-        checkpoint = torch.load(model_url, map_location=get_device())
-        LOG.info(f"Load pytorch checkpoint {model_url} finsihed!")
+        url_list = model_url.split(";", 1)
+        checkpoint = torch.load(url_list[0], map_location=get_device())
+        LOG.info(f"Load pytorch checkpoint {url_list[0]} finsihed!")
         self.model.load_state_dict(checkpoint['model_state_dict'])
         LOG.info("Load pytorch state dict finished!")
+
+        if self.is_cloud_node or self.is_partitioned:
+            checkpoint = torch.load(url_list[1], map_location=get_device())
+            LOG.info(f"Load pytorch checkpoint {url_list[1]} finsihed!")
+            self.model2.load_state_dict(checkpoint['model_state_dict'])
+            LOG.info("Load pytorch state dict finished!")
+
         self.model = self.model.to(get_device())
         self.model.eval()
+        if self.model2 is not None:
+            self.model2 = self.model2.to(get_device())
+            self.model2.eval()
 
     def predict(self, data, **kwargs):
         data = torch.from_numpy(np.asarray(data, dtype=np.float32))
-        image = to_device(data, self.device)
-        predictions = self.model(image)
+        data = to_device(data, self.device)
+
+        is_partitioned = False
+        if "is_partitioned" in kwargs:
+            is_partitioned = kwargs["is_partitioned"]
+        if self.is_cloud_node:
+            if not is_partitioned:
+                predictions = self.model(data)
+            else:
+                predictions = self.model2(data)
+        else:
+            predictions = self.model(data)
+            if is_partitioned:
+                trans_features = predictions[1]
+                predictions = self.model2(predictions[0])
+
         props = F.softmax(predictions, dim=1)
         props_arr = props.detach().cpu().numpy().flatten().tolist()
+        if is_partitioned:
+            props_arr = (props_arr, trans_features)
         return props_arr

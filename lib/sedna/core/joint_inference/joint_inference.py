@@ -242,6 +242,9 @@ class JointInference(JobBase):
                 ClassType.CALLBACK, post_process)
 
         res = self.estimator.predict(data, **kwargs)
+        if "is_partitioned" in kwargs and kwargs["is_partitioned"]:
+            if type(res) is tuple:
+                res, data = res
         edge_result = deepcopy(res)
 
         if callback_func:
