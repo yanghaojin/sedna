@@ -142,7 +142,7 @@ class JointInference(JobBase):
     the `hard_example_mining` parameter from CRD definition.
     """
 
-    def __init__(self, estimator=None, hard_example_mining: dict = None):
+    def __init__(self, estimator=None, hard_example_mining: dict = None, model_path: str = ''):
         super(JointInference, self).__init__(estimator=estimator)
         self.job_kind = K8sResourceKind.JOINT_INFERENCE_SERVICE.value
         self.local_ip = get_host_ip()
@@ -168,6 +168,8 @@ class JointInference(JobBase):
 
         if callable(self.estimator):
             self.estimator = self.estimator()
+        if model_path:
+            self.model_path = model_path
         if not os.path.exists(self.model_path):
             raise FileExistsError(f"{self.model_path} miss")
         else:
