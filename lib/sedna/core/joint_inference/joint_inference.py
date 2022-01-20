@@ -168,9 +168,15 @@ class JointInference(JobBase):
 
         if callable(self.estimator):
             self.estimator = self.estimator()
+
         if model_path:
             self.model_path = model_path
-        if not os.path.exists(self.model_path):
+        url_list = self.model_path.split(";", 1)
+        valid_model_path = True
+        for m_url in url_list:
+            if not os.path.exists(m_url):
+                valid_model_path = False
+        if not valid_model_path:
             raise FileExistsError(f"{self.model_path} miss")
         else:
             self.estimator.load(self.model_path)
