@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from sedna.common.class_factory import ClassFactory, ClassType
 from sedna.common.constant import K8sResourceKind
-from sedna.common.utils import get_host_ip
+from sedna.common.utils import get_host_ip, validate_model_urls
 from sedna.core.base import JobBase
 from sedna.service.client import ModelClient, LCReporter
 from sedna.service.server import InferenceServer
@@ -60,7 +60,7 @@ class BigModelService(JobBase):
 
         if callable(self.estimator):
             self.estimator = self.estimator()
-        if not os.path.exists(self.model_path):
+        if not validate_model_urls(self.model_path):
             raise FileExistsError(f"{self.model_path} miss")
         else:
             self.estimator.load(self.model_path)
@@ -149,6 +149,7 @@ class JointInference(JobBase):
         self.remote_ip = self.get_parameters(
             "BIG_MODEL_IP", self.local_ip)
         self.port = int(self.get_parameters("BIG_MODEL_PORT", "5000"))
+        m_path = self.model_path
 
         if self.config.lc_server != '':
             report_msg = {
@@ -170,16 +171,11 @@ class JointInference(JobBase):
             self.estimator = self.estimator()
 
         if model_path:
-            self.model_path = model_path
-        url_list = self.model_path.split(";", 1)
-        valid_model_path = True
-        for m_url in url_list:
-            if not os.path.exists(m_url):
-                valid_model_path = False
-        if not valid_model_path:
-            raise FileExistsError(f"{self.model_path} miss")
+            m_path = model_path
+        if not validate_model_urls(m_path):
+            raise FileExistsError(f"{m_path} miss")
         else:
-            self.estimator.load(self.model_path)
+            self.estimator.load(m_path)
         self.cloud = ModelClient(service_name=self.job_name,
                                  host=self.remote_ip, port=self.port)
         self.hard_example_mining_algorithm = None
