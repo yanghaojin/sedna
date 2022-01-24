@@ -63,7 +63,7 @@ class BigModelService(JobBase):
         if not os.path.exists(self.model_path):
             raise FileExistsError(f"{self.model_path} miss")
         else:
-            self.estimator.load(model_url=self.model_path)
+            self.estimator.load(self.model_path)
         app_server = InferenceServer(model=self, servername=self.job_name,
                                      host=self.local_ip, http_port=self.port)
         app_server.start()
