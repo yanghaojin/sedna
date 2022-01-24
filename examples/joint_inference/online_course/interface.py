@@ -39,7 +39,7 @@ class CIFAR100Net(nn.Module):
         activations = self.feature_extractor(images)
         return activations / self.temperature
 
-
+      
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device("cuda")
@@ -75,6 +75,7 @@ class Estimator:
             self.is_partitioned = kwargs["is_partitioned"]
         if "is_cloud_node" in kwargs:
             self.is_cloud_node = kwargs["is_cloud_node"]
+
         if self.is_cloud_node:
             self.model = CIFAR100Net("resnet110")
             self.model2 = resnet110_p2()
@@ -84,6 +85,7 @@ class Estimator:
                 self.model2 = resnet110_p1_head()
             else:
                 self.model = CIFAR100Net("resnet20")
+
         if "model_path" in kwargs:
             self.model_path = kwargs["model_path"]
 
@@ -91,15 +93,15 @@ class Estimator:
         if self.model_path: model_url = self.model_path
         url_list = model_url.split(";", 1)
         checkpoint = torch.load(url_list[0], map_location=get_device())
-        print(f"Load pytorch checkpoint {url_list[0]} finsihed!")
+        LOG.info(f"Load pytorch checkpoint {url_list[0]} finsihed!")
         self.model.load_state_dict(checkpoint['model_state_dict'])
-        print("Load pytorch state dict finished!")
+        LOG.info("Load pytorch state dict finished!")
 
         if self.is_cloud_node or self.is_partitioned:
             checkpoint = torch.load(url_list[1], map_location=get_device())
-            print(f"Load pytorch checkpoint {url_list[1]} finsihed!")
+            LOG.info(f"Load pytorch checkpoint {url_list[1]} finsihed!")
             self.model2.load_state_dict(checkpoint['model_state_dict'])
-            print("Load pytorch state dict finished!")
+            LOG.info("Load pytorch state dict finished!")
 
         self.model = self.model.to(get_device())
         self.model.eval()
