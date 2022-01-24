@@ -168,7 +168,6 @@ class JointInference(JobBase):
 
         if callable(self.estimator):
             self.estimator = self.estimator()
-
         if not os.path.exists(self.model_path):
             raise FileExistsError(f"{self.model_path} miss")
         else:

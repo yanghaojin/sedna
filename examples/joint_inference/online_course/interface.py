@@ -39,7 +39,7 @@ class CIFAR100Net(nn.Module):
         activations = self.feature_extractor(images)
         return activations / self.temperature
 
-      
+
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device("cuda")
