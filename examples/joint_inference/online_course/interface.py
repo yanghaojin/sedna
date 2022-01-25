@@ -117,10 +117,10 @@ class Estimator:
         if "is_partitioned" in kwargs:
             is_partitioned = kwargs["is_partitioned"]
         if self.is_cloud_node:
-            if not is_partitioned:
-                predictions = self.model(data)
-            else:
+            if is_partitioned:
                 predictions = self.model2(data)
+            else:
+                predictions = self.model(data)
         else:
             predictions = self.model(data)
             if is_partitioned:
@@ -129,6 +129,6 @@ class Estimator:
 
         props = F.softmax(predictions, dim=1)
         props_arr = props.detach().cpu().numpy().flatten().tolist()
-        if is_partitioned:
+        if not self.is_cloud_node and is_partitioned:
             props_arr = (props_arr, trans_features)
         return props_arr
