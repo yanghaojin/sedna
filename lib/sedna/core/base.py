@@ -28,6 +28,7 @@ from sedna.common.constant import K8sResourceKindStatus
 from sedna.service.client import LCClient
 from sedna.backend import set_backend
 from sedna.common.class_factory import ClassFactory, ClassType
+from sedna.common.utils import validate_model_urls
 
 __all__ = ('JobBase',)
 
@@ -129,7 +130,7 @@ class JobBase:
 
     @property
     def model_path(self):
-        if os.path.isfile(self.config.model_url):
+        if validate_model_urls(self.config.model_url):
             return self.config.model_url
         return self.get_parameters('model_path') or FileOps.join_path(
             self.config.model_url, self.estimator.model_name)
