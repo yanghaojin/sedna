@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from sedna.common.class_factory import ClassFactory, ClassType
 from sedna.common.constant import K8sResourceKind
-from sedna.common.utils import get_host_ip
+from sedna.common.utils import get_host_ip, validate_model_urls
 from sedna.core.base import JobBase
 from sedna.service.client import ModelClient, LCReporter
 from sedna.service.server import InferenceServer
@@ -60,7 +60,7 @@ class BigModelService(JobBase):
 
         if callable(self.estimator):
             self.estimator = self.estimator()
-        if not os.path.exists(self.model_path):
+        if not validate_model_urls(self.model_path):
             raise FileExistsError(f"{self.model_path} miss")
         else:
             self.estimator.load(self.model_path)

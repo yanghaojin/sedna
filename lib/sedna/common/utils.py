@@ -14,7 +14,7 @@
 
 """This script contains some common tools."""
 
-import socket
+import socket, os
 from functools import wraps
 
 
@@ -49,3 +49,13 @@ def singleton(cls):
         return __instances__[cls]
 
     return get_instance
+
+
+def validate_model_urls(model_urls: str = ''):
+    if not model_urls: return False
+    url_list = model_urls.split(";", 1)
+    valid_model_path = True
+    for m_url in url_list:
+        if not os.path.exists(m_url):
+            valid_model_path = False
+    return valid_model_path
