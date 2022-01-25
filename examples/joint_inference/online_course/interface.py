@@ -69,6 +69,7 @@ class Estimator:
         self.is_partitioned = False
         self.is_cloud_node = False
         self.device = get_device()
+        self.model_path = ''
 
         if "is_partitioned" in kwargs:
             self.is_partitioned = kwargs["is_partitioned"]
@@ -85,7 +86,11 @@ class Estimator:
             else:
                 self.model = CIFAR100Net("resnet20")
 
+        if "model_path" in kwargs:
+            self.model_path = kwargs["model_path"]
+
     def load(self, model_url=""):
+        if self.model_path: model_url = self.model_path
         url_list = model_url.split(";", 1)
         checkpoint = torch.load(url_list[0], map_location=get_device())
         LOG.info(f"Load pytorch checkpoint {url_list[0]} finsihed!")
