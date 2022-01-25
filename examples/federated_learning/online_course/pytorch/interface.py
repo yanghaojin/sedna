@@ -20,6 +20,8 @@ from sedna.algorithms.client_choose import SimpleClientChoose
 from sedna.common.config import Context
 from sedna.core.federated_learning import FederatedLearningV2
 
+import cifar_resnet as models
+
 # os.environ['BACKEND_TYPE'] = 'KERAS'
 
 simple_chooser = SimpleClientChoose(
@@ -30,25 +32,6 @@ fedavg = FedAvgV2()
 
 # The function `get_transmitter_from_config()` returns an object instance.
 transmitter = FederatedLearningV2.get_transmitter_from_config()
-
-
-class SddDataset(Dataset):
-    def __init__(self, x, y) -> None:
-        self.images = x
-        self.labels = y
-
-    def __len__(self):
-        return len(self.images)
-
-    def __getitem__(self, index):
-        return self.images[index], self.labels[index]
-
-
-class myDataset:
-    def __init__(self, trainset=None, testset=None) -> None:
-        self.customized = True
-        self.trainset = SddDataset(trainset.x, trainset.y)
-        self.testset = SddDataset(testset.x, testset.y)
 
 
 class Estimator:
@@ -72,19 +55,4 @@ class Estimator:
 
     @staticmethod
     def build():
-        model = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=64, kernel_size=(3, 3), stride=(2, 2)),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(in_channels=64, out_channels=32, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Flatten(),
-            nn.Dropout(p=0.25),
-            nn.Linear(6272, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 2))
-
-        return model
+        return models.resnet20(num_classes=100)

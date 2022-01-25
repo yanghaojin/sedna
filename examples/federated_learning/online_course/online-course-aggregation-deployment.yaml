@@ -20,7 +20,7 @@ spec:
             - containerPort: 7363
           env:
             - name: NUM_OF_SELECTED_CLIENTS
-              value: '20'
+              value: '2'
           resources:
               limits:
                 memory: "8Gi"
