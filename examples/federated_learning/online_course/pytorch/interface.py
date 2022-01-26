@@ -12,20 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from torch import nn
-from torch.utils.data import Dataset
-
 from sedna.algorithms.aggregation import FedAvgV2
 from sedna.algorithms.client_choose import SimpleClientChoose
 from sedna.common.config import Context
 from sedna.core.federated_learning import FederatedLearningV2
 
-import cifar_resnet as models
+import cifar_resnets as models
 
-# os.environ['BACKEND_TYPE'] = 'KERAS'
-
-simple_chooser = SimpleClientChoose(
-    per_round=int(Context.get_parameters('NUM_OF_SELECTED_CLIENTS', 2)))
+simple_chooser = SimpleClientChoose(per_round=int(Context.get_parameters('NUM_OF_SELECTED_CLIENTS', 2)))
 
 # It has been determined that mistnet is required here.
 fedavg = FedAvgV2()
@@ -41,15 +35,14 @@ class Estimator:
         self.saved = None
         self.hyperparameters = {
             "type": "basic",
-            "rounds": int(Context.get_parameters("exit_round", 5)),
-            "target_accuracy": 0.97,
-            "epochs": int(Context.get_parameters("epochs", 5)),
-            "batch_size": int(Context.get_parameters("batch_size", 32)),
-            "optimizer": "SGD",
-            "learning_rate": float(Context.get_parameters("learning_rate", 0.01)),
+            "rounds": 10,
+            "target_accuracy": 0.5,
+            "epochs": 5,
+            "batch_size": 128,
+            "optimizer": "Adam",
+            "learning_rate": 0.001,
             # The machine learning model
-            "model_name": "sdd_model",
-            "momentum": 0.9,
+            "model_name": "cifar100_resnet",
             "weight_decay": 0.0
         }
 
