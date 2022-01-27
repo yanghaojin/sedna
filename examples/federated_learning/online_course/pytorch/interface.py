@@ -17,7 +17,7 @@ from sedna.algorithms.client_choose import SimpleClientChoose
 from sedna.common.config import Context
 from sedna.core.federated_learning import FederatedLearningV2
 
-import cifar_resnets as models
+import cifar100_resnets as models
 
 simple_chooser = SimpleClientChoose(per_round=int(Context.get_parameters('NUM_OF_SELECTED_CLIENTS', 2)))
 
@@ -37,13 +37,14 @@ class Estimator:
             "type": "basic",
             "rounds": 10,
             "target_accuracy": 0.5,
-            "epochs": 5,
+            "epochs": 10,
             "batch_size": 128,
-            "optimizer": "Adam",
-            "learning_rate": 0.001,
-            # The machine learning model
+            "optimizer": "SGD",
+            "learning_rate": 0.1,
+            "lr_schedule": "StepLR",
             "model_name": "cifar100_resnet",
-            "weight_decay": 0.0
+            "momentum": 0.9,
+            "weight_decay": 1e-4
         }
 
     @staticmethod

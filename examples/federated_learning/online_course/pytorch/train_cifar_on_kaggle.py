@@ -26,6 +26,13 @@ os.environ['JOB_NAME'] = "mooc-cifar100-resnet"
 os.environ['MODEL_NAME'] = "mooc-cifar100-resnet-model"
 os.environ['DATASET_NAME'] = "cifar100"
 
+####################################################################################################################
+
+import logging
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+logging.basicConfig(level=logging.INFO, format='%(filename)s:%(lineno)s %(levelname)s:%(message)s')
+
 ## 3. 编写训练模型，导入训练数据，启动本地训练。
 
 ####################################################################################################################
@@ -39,33 +46,41 @@ download_helper(".", train=True, download=True)
 import numpy as np
 
 def parallel_seeded_shuffle(seed, *args):
+    # args is a list of all arrays that should be shuffled
+
+    # TODO: use the default random number generator of numpy, set a seed and shuffle all given arrays in the exact same way
+    # HINT: our function should work with any number of arrays
     ### BEGIN SOLUTION
     for array in args:
         fixed_seed_rng = np.random.default_rng(seed)
         fixed_seed_rng.shuffle(array)
     ### END SOLUTION
-
 ####################################################################################################################
+# do not change the test seed
 TEST_SEED = 42
-test_arrays = np.arange(10), np.arange(10)
-print("Arrays before shuffling with fixed seed:", test_arrays)
-parallel_seeded_shuffle(TEST_SEED, test_arrays[0], test_arrays[1])
-print("Arrays after shuffling with fixed seed: ", test_arrays)
+for test_arrays in [(np.arange(10), np.arange(10)), (np.arange(10), np.arange(10), np.arange(10))]:
+    print("Arrays before shuffling with fixed seed:", test_arrays)
+    parallel_seeded_shuffle(TEST_SEED, *test_arrays)
+    print("Arrays after shuffling with fixed seed: ", test_arrays)
 
-assert not np.allclose(test_arrays[0], np.arange(10)), "The arrays were not shuffled."
-assert np.allclose(test_arrays[0], test_arrays[1]), "Arrays are not shuffled the same way."
-assert np.allclose(np.array([5, 6, 0, 7, 3, 2, 4, 9, 1, 8]), test_arrays[0]), "The array is not shuffled correctly."
-
+    assert not np.allclose(test_arrays[0], np.arange(10)), "The arrays were not shuffled."
+    for i in range(1, len(test_arrays)):
+        assert np.allclose(test_arrays[0], test_arrays[i]), "Arrays 0 and {} are not shuffled the same way.".format(i)
+    assert np.allclose(np.array([5, 6, 0, 7, 3, 2, 4, 9, 1, 8]), test_arrays[0]), "The arrays are not shuffled correctly based on TEST_SEED=42."
+print("Test passed.")
 ####################################################################################################################
+# TODO: Store your birthdate as one integer in the format YYYYMMDD in the variable `MY_RANDOM_SEED`.
+#       This ensures that (almost) everyone in the course has a different random seed and thus different share of data.
 ### BEGIN SOLUTION
 MY_RANDOM_SEED = 19800101
 ### END SOLUTION
-test_arrays = np.arange(10), np.arange(10)
-print("Arrays before shuffling with fixed seed:", test_arrays)
-parallel_seeded_shuffle(MY_RANDOM_SEED, test_arrays[0], test_arrays[1])
-print("Arrays after shuffling with fixed seed: ", test_arrays)
-assert np.allclose(test_arrays[0], test_arrays[1]), "Arrays are not shuffled the same way."
-
+data = np.arange(10)
+labels = np.arange(10)
+print("Arrays before shuffling with fixed seed:", data, labels)
+parallel_seeded_shuffle(MY_RANDOM_SEED, data, labels)
+print("Arrays after shuffling with fixed seed: ", data, labels)
+assert np.allclose(data, labels), "Arrays are not shuffled the same way."
+print("Test passed.")
 ####################################################################################################################
 from pickle import load as pload
 
@@ -78,9 +93,6 @@ from torch.utils.data import Dataset
 
 
 class CIFAR100Partition(Dataset):
-    # we want to use one third of all cifar100 data (randomly chosen)
-    PARTITION_FRACTION = 1/3
-
     def __init__(self, dataset_path: Path, image_transforms: tt.Compose, train: bool = True,
                  image_augmentations: Optional[iaa.Sequential] = None):
         super().__init__()
@@ -92,11 +104,14 @@ class CIFAR100Partition(Dataset):
         self.image_augmentations = image_augmentations
 
         if not train:
+            # use all test data
             assert len(self.images) == len(self.labels), "Number of images and labels is not equal!"
             return
 
-        partition_size = int(len(self.images) * self.PARTITION_FRACTION)
+        # TODO: shuffle the training data (images and labels), then use only half of it
         ### BEGIN SOLUTION
+        PARTITION_FRACTION = 1/2
+        partition_size = int(len(self.images) * PARTITION_FRACTION)
         parallel_seeded_shuffle(MY_RANDOM_SEED, self.images, self.labels)
         self.images = self.images[:partition_size]
         self.labels = self.labels[:partition_size]
@@ -141,13 +156,14 @@ cifar_test_set = CIFAR100Partition(Path("./cifar-100-python/test"), image_transf
 print("Number of training samples:", len(cifar_train_set))
 print("Number of test samples:    ", len(cifar_test_set))
 
-assert len(cifar_train_set) == 16666, "We should use 16666 training samples (one third of all data)."
+assert len(cifar_train_set) == 25000, "We should use 25000 training samples (half of all data)."
 assert len(cifar_test_set) == 10000, "We should use all 10000 test samples."
 
 ####################################################################################################################
-import cifar_resnets as models
+import cifar100_resnets as models
 
-class PlatoDataset:
+
+class CustomDataset:
     def __init__(self, trainset, testset) -> None:
         self.customized = True
         self.trainset = trainset
@@ -160,36 +176,64 @@ class Estimator:
         self.pretrained = None
         self.saved = None
         self.hyperparameters = {
-            "type": "basic",
+            "type": "edge_ai_trainer",
             "rounds": 10,
             "target_accuracy": 0.5,
-            "epochs": 5,
+            "epochs": 10,
             "batch_size": 128,
-            "optimizer": "Adam",
-            "learning_rate": 0.001,
+            "optimizer": "SGD",
+            "learning_rate": 0.1,
+            "lr_schedule": "StepLR",
             "model_name": "cifar100_resnet",
-            "weight_decay": 0.0
+            "momentum": 0.9,
+            "weight_decay": 1e-4
         }
 
     @staticmethod
     def build():
         return models.resnet20(num_classes=100)
 
+
 ####################################################################################################################
 from sedna.algorithms.aggregation import FedAvgV2
 from sedna.core.federated_learning import FederatedLearningV2
 
-data = PlatoDataset(trainset=cifar_train_set, testset=cifar_test_set)
 
-# Our aggregation method:
-fedavg = FedAvgV2()
-# The function `get_transmitter_from_config` returns an object instance:
-transmitter = FederatedLearningV2.get_transmitter_from_config()
-# Create an instance of our previously created estimator:
+our_dataset = CustomDataset(trainset=cifar_train_set, testset=cifar_test_set)
+# create an instance of our estimator
 estimator = Estimator()
+# our aggregation method
+fedavg = FedAvgV2()
+# get configured model transmitter
+transmitter = FederatedLearningV2.get_transmitter_from_config()
+
+# TODO: uncomment on Kaggle!
+# fl = FederatedLearningV2(
+#     data=our_dataset,
+#     estimator=estimator,
+#     aggregation=fedavg,
+#     transmitter=transmitter)
+# fl.train()
+# HINT: this should throw an error
+
+####################################################################################################################
+from plato.trainers import registry as trainer_registry
+from plato.trainers.basic import Trainer as BasicTrainer
+
+
+class EdgeAiTrainer(BasicTrainer):
+    def train(self, trainset, sampler, cut_layer=None) -> float:
+        logging.info("Edge AI trainer started training.")
+        training_time = super().train(trainset, sampler, cut_layer=cut_layer)
+        logging.info("Edge AI trainer finished training, saving the model.")
+        self.save_model()
+        return training_time
+
+
+trainer_registry.registered_trainers["edge_ai_trainer"] = EdgeAiTrainer
 
 fl = FederatedLearningV2(
-    data=data,
+    data=our_dataset,
     estimator=estimator,
     aggregation=fedavg,
     transmitter=transmitter)
