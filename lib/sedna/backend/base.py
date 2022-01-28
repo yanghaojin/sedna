@@ -108,7 +108,9 @@ class BackendBase:
             self.model_save_path, mname = os.path.split(model_url)
         elif os.path.isfile(self.model_save_path):
             self.model_save_path, mname = os.path.split(self.model_save_path)
-        model_path = FileOps.join_path(self.model_save_path, mname)
+        # TODO: modified just for online course, don't merge this line to main branch.
+        # model_path = FileOps.join_path(self.model_save_path, mname)
+        model_path = self.model_save_path
         if model_url:
             model_path = FileOps.download(model_url, model_path)
         self.has_load = True
