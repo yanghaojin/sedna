@@ -56,6 +56,6 @@ def validate_model_urls(model_urls: str = ''):
     url_list = model_urls.split(";", 1)
     valid_model_path = True
     for m_url in url_list:
-        if not os.path.exists(m_url):
+        if not os.path.isfile(m_url):
             valid_model_path = False
     return valid_model_path
