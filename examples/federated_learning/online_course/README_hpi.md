@@ -5,15 +5,15 @@ This example should later be able to run on Kaggle. For testing the script we ca
 Installation required (run commands from the git root directory):
 ```bash
 pip install -r lib/requirements.txt
-pip install torch torchvision imgaug matplotlib
+pip install torch torchvision imgaug matplotlib  # requirements for our own code
 ```
 
 Add the `lib` folder to the python path.
 
-To run the script, pass `AGG_IP` as environment variable and client id (later manully entered in Kaggle):
+To run the script, pass `AGG_IP` as environment variable (manully entered in Kaggle):
 ```bash
 cd examples/federated_learning/online_course
-AGG_IP="x.x.x.x" python pytorch/train_cifar_on_kaggle.py -i 1
+AGG_IP="x.x.x.x" python pytorch/train_cifar_on_kaggle.py
 ```
 
 The script should download the cifar dataset and try connecting to the server.
