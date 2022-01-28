@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
 import os
 from copy import deepcopy
 
@@ -101,6 +101,7 @@ class BigModelService(JobBase):
             callback_func = ClassFactory.get_cls(
                 ClassType.CALLBACK, post_process)
 
+        self.log.info(f"Bigmodel inference: kwargs={kwargs}")
         res = self.estimator.predict(data, **kwargs)
         if callback_func:
             res = callback_func(res)

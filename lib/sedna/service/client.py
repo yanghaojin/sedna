@@ -229,7 +229,9 @@ class ModelClient:
     def inference(self, x, **kwargs):
         """Use the remote big model server to inference."""
         json_data = deepcopy(kwargs)
-        json_data.update({"data": x})
+        # json_data.update({"data": x})
+        json_data['data'] = x
+        json_data['kwargs'] = deepcopy(kwargs)
         _url = f"{self.endpoint}/predict"
         return http_request(url=_url, method="POST", json=json_data)
 
