@@ -85,9 +85,8 @@ class ResNet110_P1(nn.Module):
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
-        self.upsample = nn.Upsample(scale_factor=4, mode='nearest')
         # self.downsample = nn.MaxPool3d((5,1,1),stride=(5,1,1))
-        self.downsample = nn.Conv2d(80, 16, kernel_size=1, stride=1, bias=False)
+        self.downsample = nn.Conv2d(64, 16, kernel_size=1, stride=1, bias=False)
         self.apply(_weights_init)
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -105,8 +104,7 @@ class ResNet110_P1(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        cat = torch.cat((self.upsample(out), shortcut), 1)
-        cat = self.downsample(cat)
+        cat = self.downsample(out)
         return (out, cat)
 
 
@@ -133,6 +131,7 @@ class ResNet110_P2(nn.Module):
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
         self.linear = nn.Linear(64, num_classes)
 
+        self.upsample = nn.Upsample(scale_factor=4, mode='nearest')
         self.apply(_weights_init)
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -145,7 +144,8 @@ class ResNet110_P2(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.layer1(x)
+        out = self.upsample(x)
+        out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = F.avg_pool2d(out, out.size()[3])
