@@ -12,103 +12,110 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## 1. 配置训练节点ID、聚合服务ip&port、数据集路径、训练超参数
+# Contents are in utility script on Kaggle:
 import os
-
-# TODO: set in environment variables (if working offline)
-# TODO: set manually on Kaggle
-# sys.argv.extend(['-i', '1'])  # client id
 # os.environ['AGG_IP']="x.x.x.x" # aggregation server ip
-
-# TODO: should allocated by sedna.
-# client_id = ''.join(random.choice(string.digits) for i in range(10))
-# # aggregation service parameters
-# sys.argv.extend(['-i', client_id])  # client id
-# os.environ['AGG_IP'] = "x.x.x.x"  # aggregation server ip
 os.environ['AGG_PORT'] = "30363"  # aggregation server websocket port
 os.environ['TRANSMITTER'] = "ws"
-# os.environ['PARTICIPANTS_COUNT']="2"
-
-# datasets parameters
-os.environ['TRAIN_DATASET_URL'] = "/kaggle/input/magnetic-tile-defect-datasets/1.txt"
-
-# training parameters
-os.environ['learning_rate'] = "0.001"
-os.environ['batch_size'] = "32"
-os.environ['epochs'] = "2"
 
 # worker parameters.
-# os.environ['DATA_PATH_PREFIX']="/home/data"
-# os.environ['LC_SERVER']="http://localhost:9100"
-# os.environ['HOSTNAME']="edge1"  # client name
 os.environ['MODEL_URL'] = "/home/data/model"
 os.environ['NAMESPACE'] = "default"
 os.environ['WORKER_NAME'] = "trainworker-nf8jw"
-os.environ['JOB_NAME'] = "surface-defect-detection"
-os.environ['MODEL_NAME'] = "surface-defect-detection-model"
-os.environ['DATASET_NAME'] = "edge1-surface-defect-detection-dataset"
+os.environ['JOB_NAME'] = "mooc-cifar100-resnet"
+os.environ['MODEL_NAME'] = "mooc-cifar100-resnet-model"
+os.environ['DATASET_NAME'] = "cifar100"
+
+####################################################################################################################
+
+import logging
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+logging.basicConfig(level=logging.INFO, format='%(filename)s:%(lineno)s %(levelname)s:%(message)s')
 
 ## 3. 编写训练模型，导入训练数据，启动本地训练。
 
-from sedna.algorithms.aggregation import FedAvgV2
-from sedna.algorithms.client_choose import SimpleClientChoose
-from sedna.common.config import Context
-from sedna.core.federated_learning import FederatedLearningV2
+####################################################################################################################
 
-import pickle
+# on Kaggle: add CIFAR as inputs, this code is not needed
+# offline: download cifar manually
+from torchvision.datasets import CIFAR100 as download_helper
+download_helper(".", train=True, download=True)
 
+####################################################################################################################
 import numpy as np
-import torchvision.transforms as tt
 
-from typing import Type, Union
+def parallel_seeded_shuffle(seed, *args):
+    # args is a list of all arrays that should be shuffled
 
+    # TODO: use the default random number generator of numpy, set a seed and shuffle all given arrays in the exact same way
+    # HINT: our function should work with any number of arrays
+    ### BEGIN SOLUTION
+    for array in args:
+        fixed_seed_rng = np.random.default_rng(seed)
+        fixed_seed_rng.shuffle(array)
+    ### END SOLUTION
+####################################################################################################################
+# do not change the test seed
+TEST_SEED = 42
+for test_arrays in [(np.arange(10), np.arange(10)), (np.arange(10), np.arange(10), np.arange(10))]:
+    print("Arrays before shuffling with fixed seed:", test_arrays)
+    parallel_seeded_shuffle(TEST_SEED, *test_arrays)
+    print("Arrays after shuffling with fixed seed: ", test_arrays)
+
+    assert not np.allclose(test_arrays[0], np.arange(10)), "The arrays were not shuffled."
+    for i in range(1, len(test_arrays)):
+        assert np.allclose(test_arrays[0], test_arrays[i]), "Arrays 0 and {} are not shuffled the same way.".format(i)
+    assert np.allclose(np.array([5, 6, 0, 7, 3, 2, 4, 9, 1, 8]), test_arrays[0]), "The arrays are not shuffled correctly based on TEST_SEED=42."
+print("Test passed.")
+####################################################################################################################
+# TODO: Store your birthdate as one integer in the format YYYYMMDD in the variable `MY_RANDOM_SEED`.
+#       This ensures that (almost) everyone in the course has a different random seed and thus different share of data.
+### BEGIN SOLUTION
+MY_RANDOM_SEED = 19800101
+### END SOLUTION
+data = np.arange(10)
+labels = np.arange(10)
+print("Arrays before shuffling with fixed seed:", data, labels)
+parallel_seeded_shuffle(MY_RANDOM_SEED, data, labels)
+print("Arrays after shuffling with fixed seed: ", data, labels)
+assert np.allclose(data, labels), "Arrays are not shuffled the same way."
+print("Test passed.")
+####################################################################################################################
+from pickle import load as pload
+
+from torchvision import transforms as tt
+from typing import Optional
 from imgaug import augmenters as iaa
 from pathlib import Path
 from PIL import Image
 from torch.utils.data import Dataset
 
-import cifar_resnet as models
 
-# on Kaggle: add CIFAR as inputs
-# offline: download cifar manually
-from torchvision.datasets import CIFAR100 as download_helper
-download_helper(".", train=True, download=True)
-
-from numpy.random import default_rng
-
-# task to solve for participants:
-def parallel_seeded_shuffle(seed, *args):
-    for array in args:
-        fixed_seed_rng = default_rng(seed)
-        fixed_seed_rng.shuffle(array)
-
-
-test_arrays = np.arange(10), np.arange(10)
-parallel_seeded_shuffle(42, *test_arrays)
-assert np.allclose(test_arrays[0], test_arrays[1]), "arrays are not shuffled the same way"
-assert np.allclose(np.array([5, 6, 0, 7, 3, 2, 4, 9, 1, 8]), test_arrays[0]), "the seed is not used correctly"
-
-
-# participants enter birthdate as their seed
-my_birthday = 19800101
-partition_fraction = 1/3  # we used one third of all cifar100 data ("randomly" chosen)
-
-
-class CIFAR100(Dataset):
-    def __init__(self, dataset_path: Path, image_transforms: tt.Compose, image_augmentations: Union[None, Type[iaa.Augmenter]] = None):
+class CIFAR100Partition(Dataset):
+    def __init__(self, dataset_path: Path, image_transforms: tt.Compose, train: bool = True,
+                 image_augmentations: Optional[iaa.Sequential] = None):
         super().__init__()
-        data = pickle.load(dataset_path.open("rb"), encoding="bytes")
+        data = pload(dataset_path.open("rb"), encoding="bytes")
         self.images = data[b"data"]
         self.labels = data[b"fine_labels"]
 
-        # possible task for students:
-        parallel_seeded_shuffle(my_birthday, self.images, self.labels)
-        partition_size = int(len(self.images) * partition_fraction)
-        self.images = self.images[:partition_size]
-        self.labels = self.labels[:partition_size]
-
         self.image_transforms = image_transforms
         self.image_augmentations = image_augmentations
+
+        if not train:
+            # use all test data
+            assert len(self.images) == len(self.labels), "Number of images and labels is not equal!"
+            return
+
+        # TODO: shuffle the training data (images and labels), then use only half of it
+        ### BEGIN SOLUTION
+        PARTITION_FRACTION = 1/2
+        partition_size = int(len(self.images) * PARTITION_FRACTION)
+        parallel_seeded_shuffle(MY_RANDOM_SEED, self.images, self.labels)
+        self.images = self.images[:partition_size]
+        self.labels = self.labels[:partition_size]
+        ### END SOLUTION
 
         assert len(self.images) == len(self.labels), "Number of images and labels is not equal!"
 
@@ -143,21 +150,20 @@ train_augmentations = iaa.Sequential([
 
 # on Kaggle: "/kaggle/input/cifar100/train"
 # on Kaggle: "/kaggle/input/cifar100/test"
-train_dataset = CIFAR100(Path("./cifar-100-python/train"), image_transformations, train_augmentations)
-test_dataset = CIFAR100(Path("./cifar-100-python/test"), image_transformations)
+cifar_train_set = CIFAR100Partition(Path("./cifar-100-python/train"), image_transformations, image_augmentations=train_augmentations)
+cifar_test_set = CIFAR100Partition(Path("./cifar-100-python/test"), image_transformations, train=False)
 
-# os.environ['BACKEND_TYPE'] = 'TORCH'
+print("Number of training samples:", len(cifar_train_set))
+print("Number of test samples:    ", len(cifar_test_set))
 
-simple_chooser = SimpleClientChoose(per_round=2)
+assert len(cifar_train_set) == 25000, "We should use 25000 training samples (half of all data)."
+assert len(cifar_test_set) == 10000, "We should use all 10000 test samples."
 
-# It has been determined that mistnet is required here.
-fedavg = FedAvgV2()
-
-# The function `get_transmitter_from_config()` returns an object instance.
-transmitter = FederatedLearningV2.get_transmitter_from_config()
+####################################################################################################################
+import cifar100_resnets as models
 
 
-class CIFAR100Partition:
+class CustomDataset:
     def __init__(self, trainset, testset) -> None:
         self.customized = True
         self.trainset = trainset
@@ -169,18 +175,19 @@ class Estimator:
         self.model = self.build()
         self.pretrained = None
         self.saved = None
+        self.use_client = "edge_ai_client"
         self.hyperparameters = {
-            "type": "basic",
-            "rounds": int(Context.get_parameters("exit_round", 5)),
-            "target_accuracy": 0.6,
-            "epochs": int(Context.get_parameters("epochs", 5)),
-            "batch_size": int(Context.get_parameters("batch_size", 32)),
+            "type": "edge_ai_trainer",
+            "rounds": 10,
+            "target_accuracy": 0.5,
+            "epochs": 2,
+            "batch_size": 128,
             "optimizer": "SGD",
-            "learning_rate": float(Context.get_parameters("learning_rate", 0.01)),
-            # The machine learning model
-            "model_name": "sdd_model",
+            "learning_rate": 0.1,
+            "lr_schedule": "StepLR",
+            "model_name": "cifar100_resnet",
             "momentum": 0.9,
-            "weight_decay": 0.0
+            "weight_decay": 1e-4
         }
 
     @staticmethod
@@ -188,21 +195,48 @@ class Estimator:
         return models.resnet20(num_classes=100)
 
 
-def main():
-    data = CIFAR100Partition(trainset=train_dataset, testset=test_dataset)
-    print("One third of train data:", len(train_dataset))
-    print("One third of test data:", len(test_dataset))
-    estimator = Estimator()
+####################################################################################################################
+from plato.trainers import registry as trainer_registry
+from plato.trainers.basic import Trainer as BasicTrainer
 
-    fl = FederatedLearningV2(
-        data=data,
-        estimator=estimator,
-        aggregation=fedavg,
-        transmitter=transmitter)
-
-    fl.register()
-    fl.train()
+from plato.clients import registry as client_registry
+from plato.clients.simple import Client as SimpleClient
 
 
-if __name__ == '__main__':
-    main()
+class EdgeAiTrainer(BasicTrainer):
+    def train(self, trainset, sampler, cut_layer=None) -> float:
+        logging.info("Edge AI trainer started training.")
+        training_time = super().train(trainset, sampler, cut_layer=cut_layer)
+        logging.info("Edge AI trainer finished training, saving the model.")
+        self.save_model()
+        return training_time
+
+
+class EdgeAiClient(SimpleClient):
+    pass
+
+
+client_registry.registered_clients["edge_ai_client"] = EdgeAiClient
+trainer_registry.registered_trainers["edge_ai_trainer"] = EdgeAiTrainer
+
+####################################################################################################################
+
+from sedna.algorithms.aggregation import FedAvgV2
+from sedna.core.federated_learning import FederatedLearningV2
+
+
+our_dataset = CustomDataset(trainset=cifar_train_set, testset=cifar_test_set)
+# create an instance of our estimator
+estimator = Estimator()
+# our aggregation method
+fedavg = FedAvgV2()
+# get configured model transmitter
+transmitter = FederatedLearningV2.get_transmitter_from_config()
+
+
+fl = FederatedLearningV2(
+    data=our_dataset,
+    estimator=estimator,
+    aggregation=fedavg,
+    transmitter=transmitter)
+fl.train()
