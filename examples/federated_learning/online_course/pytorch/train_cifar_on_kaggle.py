@@ -175,11 +175,12 @@ class Estimator:
         self.model = self.build()
         self.pretrained = None
         self.saved = None
+        self.use_client = "edge_ai_client"
         self.hyperparameters = {
             "type": "edge_ai_trainer",
             "rounds": 10,
             "target_accuracy": 0.5,
-            "epochs": 10,
+            "epochs": 2,
             "batch_size": 128,
             "optimizer": "SGD",
             "learning_rate": 0.1,
@@ -231,6 +232,17 @@ class EdgeAiTrainer(BasicTrainer):
 
 
 trainer_registry.registered_trainers["edge_ai_trainer"] = EdgeAiTrainer
+
+####################################################################################################################
+from plato.clients import registry as client_registry
+from plato.clients.simple import Client as SimpleClient
+
+
+class EdgeAiClient(SimpleClient):
+    pass
+
+
+client_registry.registered_clients["edge_ai_client"] = EdgeAiClient
 
 fl = FederatedLearningV2(
     data=our_dataset,

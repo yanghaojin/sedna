@@ -215,6 +215,8 @@ class FederatedLearningV2:
             self.model = estimator.model
             train.update(estimator.hyperparameters)
             Config().trainer = Config.namedtuple_from_dict(train)
+            if hasattr(estimator, "use_client"):
+                clients["type"] = estimator.use_client
 
         if aggregation is not None:
             Config().algorithm = Config.namedtuple_from_dict(
