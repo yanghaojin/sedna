@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from pydantic import BaseModel
 from fastapi import FastAPI
@@ -44,7 +44,8 @@ class ServePredictResult(BaseModel):  # pylint: disable=too-few-public-methods
 
 class InferenceItem(BaseModel):  # pylint: disable=too-few-public-methods
     data: List
-    callback: Optional[str] = None
+    # callback: Optional[str] = None
+    kwargs: Optional[Dict] = None
 
 
 class InferenceServer(BaseServer):  # pylint: disable=too-many-arguments
@@ -98,5 +99,5 @@ class InferenceServer(BaseServer):  # pylint: disable=too-many-arguments
 
     def predict(self, data: InferenceItem):
         inference_res = self.model.inference(
-            data.data, post_process=data.callback)
+            data.data, **data.kwargs)
         return ServePredictResult(result=inference_res)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## Contents are in utility script on Kaggle:
+# Contents are in utility script on Kaggle:
 import os
 # os.environ['AGG_IP']="x.x.x.x" # aggregation server ip
 os.environ['AGG_PORT'] = "30363"  # aggregation server websocket port

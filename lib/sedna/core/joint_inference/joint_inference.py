@@ -11,16 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
 import os
 from copy import deepcopy
 
-from sedna.common.utils import get_host_ip
 from sedna.common.class_factory import ClassFactory, ClassType
-from sedna.service.server import InferenceServer
-from sedna.service.client import ModelClient, LCReporter
 from sedna.common.constant import K8sResourceKind
+from sedna.common.utils import get_host_ip, validate_model_urls
 from sedna.core.base import JobBase
+from sedna.service.client import ModelClient, LCReporter
+from sedna.service.server import InferenceServer
 
 __all__ = ("JointInference", "BigModelService")
 
@@ -60,7 +60,7 @@ class BigModelService(JobBase):
 
         if callable(self.estimator):
             self.estimator = self.estimator()
-        if not os.path.exists(self.model_path):
+        if not validate_model_urls(self.model_path):
             raise FileExistsError(f"{self.model_path} miss")
         else:
             self.estimator.load(self.model_path)
@@ -101,6 +101,7 @@ class BigModelService(JobBase):
             callback_func = ClassFactory.get_cls(
                 ClassType.CALLBACK, post_process)
 
+        self.log.info(f"Bigmodel inference: kwargs={kwargs}")
         res = self.estimator.predict(data, **kwargs)
         if callback_func:
             res = callback_func(res)
@@ -150,20 +151,21 @@ class JointInference(JobBase):
             "BIG_MODEL_IP", self.local_ip)
         self.port = int(self.get_parameters("BIG_MODEL_PORT", "5000"))
 
-        report_msg = {
-            "name": self.worker_name,
-            "namespace": self.config.namespace,
-            "ownerName": self.job_name,
-            "ownerKind": self.job_kind,
-            "kind": "inference",
-            "results": []
-        }
-        period_interval = int(self.get_parameters("LC_PERIOD", "30"))
-        self.lc_reporter = LCReporter(lc_server=self.config.lc_server,
-                                      message=report_msg,
-                                      period_interval=period_interval)
-        self.lc_reporter.setDaemon(True)
-        self.lc_reporter.start()
+        if self.config.lc_server != '':
+            report_msg = {
+                "name": self.worker_name,
+                "namespace": self.config.namespace,
+                "ownerName": self.job_name,
+                "ownerKind": self.job_kind,
+                "kind": "inference",
+                "results": []
+            }
+            period_interval = int(self.get_parameters("LC_PERIOD", "30"))
+            self.lc_reporter = LCReporter(lc_server=self.config.lc_server,
+                                          message=report_msg,
+                                          period_interval=period_interval)
+            self.lc_reporter.setDaemon(True)
+            self.lc_reporter.start()
 
         if callable(self.estimator):
             self.estimator = self.estimator()
@@ -241,12 +243,16 @@ class JointInference(JobBase):
                 ClassType.CALLBACK, post_process)
 
         res = self.estimator.predict(data, **kwargs)
+        if "is_partitioned" in kwargs and kwargs["is_partitioned"]:
+            if type(res) is tuple:
+                res, data = res
         edge_result = deepcopy(res)
 
         if callback_func:
             res = callback_func(res)
 
-        self.lc_reporter.update_for_edge_inference()
+        if self.config.lc_server != '':
+            self.lc_reporter.update_for_edge_inference()
 
         is_hard_example = False
         cloud_result = None
@@ -262,5 +268,6 @@ class JointInference(JobBase):
                     self.log.error(f"get cloud result error: {err}")
                 else:
                     res = cloud_result
-                self.lc_reporter.update_for_collaboration_inference()
+                if self.config.lc_server != '':
+                    self.lc_reporter.update_for_edge_inference()
         return [is_hard_example, res, edge_result, cloud_result]
