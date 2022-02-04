@@ -196,6 +196,31 @@ class Estimator:
 
 
 ####################################################################################################################
+from plato.trainers import registry as trainer_registry
+from plato.trainers.basic import Trainer as BasicTrainer
+
+from plato.clients import registry as client_registry
+from plato.clients.simple import Client as SimpleClient
+
+
+class EdgeAiTrainer(BasicTrainer):
+    def train(self, trainset, sampler, cut_layer=None) -> float:
+        logging.info("Edge AI trainer started training.")
+        training_time = super().train(trainset, sampler, cut_layer=cut_layer)
+        logging.info("Edge AI trainer finished training, saving the model.")
+        self.save_model()
+        return training_time
+
+
+class EdgeAiClient(SimpleClient):
+    pass
+
+
+client_registry.registered_clients["edge_ai_client"] = EdgeAiClient
+trainer_registry.registered_trainers["edge_ai_trainer"] = EdgeAiTrainer
+
+####################################################################################################################
+
 from sedna.algorithms.aggregation import FedAvgV2
 from sedna.core.federated_learning import FederatedLearningV2
 
@@ -208,41 +233,6 @@ fedavg = FedAvgV2()
 # get configured model transmitter
 transmitter = FederatedLearningV2.get_transmitter_from_config()
 
-# TODO: uncomment on Kaggle!
-# fl = FederatedLearningV2(
-#     data=our_dataset,
-#     estimator=estimator,
-#     aggregation=fedavg,
-#     transmitter=transmitter)
-# fl.train()
-# HINT: this should throw an error
-
-####################################################################################################################
-from plato.trainers import registry as trainer_registry
-from plato.trainers.basic import Trainer as BasicTrainer
-
-
-class EdgeAiTrainer(BasicTrainer):
-    def train(self, trainset, sampler, cut_layer=None) -> float:
-        logging.info("Edge AI trainer started training.")
-        training_time = super().train(trainset, sampler, cut_layer=cut_layer)
-        logging.info("Edge AI trainer finished training, saving the model.")
-        self.save_model()
-        return training_time
-
-
-trainer_registry.registered_trainers["edge_ai_trainer"] = EdgeAiTrainer
-
-####################################################################################################################
-from plato.clients import registry as client_registry
-from plato.clients.simple import Client as SimpleClient
-
-
-class EdgeAiClient(SimpleClient):
-    pass
-
-
-client_registry.registered_clients["edge_ai_client"] = EdgeAiClient
 
 fl = FederatedLearningV2(
     data=our_dataset,
